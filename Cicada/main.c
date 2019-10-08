@@ -12,10 +12,10 @@
 void startTimer();
 void stopTimer();
 
-ISR(TIMER0_OVF_vect)
+ISR(TIMER1_OVF_vect)
 {
 	stopTimer();
-	//Do smth
+	//Do smthng
 	startTimer();
 }
 
@@ -40,7 +40,7 @@ int main(void)
 	// PB1 - output
 	DDRB |= (1<<1);
 	PORTB &= ~(1<<1);
-	OCR1A = 0x00;
+	OCR1A = 0;
 
 	//Power managment - Open
 	DDRD |= (1<<0);
