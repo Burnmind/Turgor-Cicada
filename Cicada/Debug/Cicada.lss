@@ -3,27 +3,29 @@ Cicada.elf:     file format elf32-avr
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .text         00000080  00000000  00000000  00000054  2**1
+  0 .text         000000ec  00000000  00000000  00000054  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  1 .data         00000000  00800060  00800060  000000d4  2**0
+  1 .data         00000000  00800060  00800060  00000140  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  2 .comment      00000030  00000000  00000000  000000d4  2**0
+  2 .comment      00000030  00000000  00000000  00000140  2**0
                   CONTENTS, READONLY
-  3 .note.gnu.avr.deviceinfo 0000003c  00000000  00000000  00000104  2**2
+  3 .note.gnu.avr.deviceinfo 0000003c  00000000  00000000  00000170  2**2
                   CONTENTS, READONLY
-  4 .debug_aranges 00000020  00000000  00000000  00000140  2**0
+  4 .debug_aranges 00000038  00000000  00000000  000001ac  2**0
                   CONTENTS, READONLY, DEBUGGING
-  5 .debug_info   0000051f  00000000  00000000  00000160  2**0
+  5 .debug_info   00000580  00000000  00000000  000001e4  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_abbrev 000004a4  00000000  00000000  0000067f  2**0
+  6 .debug_abbrev 000004df  00000000  00000000  00000764  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_line   000001f1  00000000  00000000  00000b23  2**0
+  7 .debug_line   00000257  00000000  00000000  00000c43  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_frame  00000024  00000000  00000000  00000d14  2**2
+  8 .debug_frame  0000009c  00000000  00000000  00000e9c  2**2
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_str    000002b2  00000000  00000000  00000d38  2**0
+  9 .debug_str    000002d2  00000000  00000000  00000f38  2**0
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_ranges 00000010  00000000  00000000  00000fea  2**0
+ 10 .debug_loc    000000cb  00000000  00000000  0000120a  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 11 .debug_ranges 00000028  00000000  00000000  000012d5  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -38,7 +40,7 @@ Disassembly of section .text:
    c:	14 c0       	rjmp	.+40     	; 0x36 <__bad_interrupt>
    e:	13 c0       	rjmp	.+38     	; 0x36 <__bad_interrupt>
   10:	12 c0       	rjmp	.+36     	; 0x36 <__bad_interrupt>
-  12:	11 c0       	rjmp	.+34     	; 0x36 <__bad_interrupt>
+  12:	46 c0       	rjmp	.+140    	; 0xa0 <__vector_9>
   14:	10 c0       	rjmp	.+32     	; 0x36 <__bad_interrupt>
   16:	0f c0       	rjmp	.+30     	; 0x36 <__bad_interrupt>
   18:	0e c0       	rjmp	.+28     	; 0x36 <__bad_interrupt>
@@ -56,79 +58,167 @@ Disassembly of section .text:
   2c:	d4 e0       	ldi	r29, 0x04	; 4
   2e:	de bf       	out	0x3e, r29	; 62
   30:	cd bf       	out	0x3d, r28	; 61
-  32:	02 d0       	rcall	.+4      	; 0x38 <main>
-  34:	23 c0       	rjmp	.+70     	; 0x7c <_exit>
+  32:	0c d0       	rcall	.+24     	; 0x4c <main>
+  34:	59 c0       	rjmp	.+178    	; 0xe8 <_exit>
 
 00000036 <__bad_interrupt>:
   36:	e4 cf       	rjmp	.-56     	; 0x0 <__vectors>
 
-00000038 <main>:
+00000038 <startTimer>:
+    }
+}
 
+void startTimer() {
+	//Timer/Counter 1 start 1/8
+	TCCR1B &= ~(1<<CS10);
+  38:	8e b5       	in	r24, 0x2e	; 46
+  3a:	8e 7f       	andi	r24, 0xFE	; 254
+  3c:	8e bd       	out	0x2e, r24	; 46
+	TCCR1B |= (1<<CS11);
+  3e:	8e b5       	in	r24, 0x2e	; 46
+  40:	82 60       	ori	r24, 0x02	; 2
+  42:	8e bd       	out	0x2e, r24	; 46
+	TCCR1B &= ~(1<<CS12);
+  44:	8e b5       	in	r24, 0x2e	; 46
+  46:	8b 7f       	andi	r24, 0xFB	; 251
+  48:	8e bd       	out	0x2e, r24	; 46
+  4a:	08 95       	ret
+
+0000004c <main>:
+}
 
 int main(void)
 {
 	//Normal PWM non-inverting mode
 	TCCR1A &= ~(1<<COM1A0);
-  38:	8f b5       	in	r24, 0x2f	; 47
-  3a:	8f 7b       	andi	r24, 0xBF	; 191
-  3c:	8f bd       	out	0x2f, r24	; 47
+  4c:	8f b5       	in	r24, 0x2f	; 47
+  4e:	8f 7b       	andi	r24, 0xBF	; 191
+  50:	8f bd       	out	0x2f, r24	; 47
 	TCCR1A |= (1<<COM1A1);
-  3e:	8f b5       	in	r24, 0x2f	; 47
-  40:	80 68       	ori	r24, 0x80	; 128
-  42:	8f bd       	out	0x2f, r24	; 47
+  52:	8f b5       	in	r24, 0x2f	; 47
+  54:	80 68       	ori	r24, 0x80	; 128
+  56:	8f bd       	out	0x2f, r24	; 47
 
-	//Fast PWM 10-bit
+	//Fast PWM 8-bit
 	TCCR1A |= (1<<WGM10);
-  44:	8f b5       	in	r24, 0x2f	; 47
-  46:	81 60       	ori	r24, 0x01	; 1
-  48:	8f bd       	out	0x2f, r24	; 47
-	TCCR1A |= (1<<WGM11);
-  4a:	8f b5       	in	r24, 0x2f	; 47
-  4c:	82 60       	ori	r24, 0x02	; 2
-  4e:	8f bd       	out	0x2f, r24	; 47
+  58:	8f b5       	in	r24, 0x2f	; 47
+  5a:	81 60       	ori	r24, 0x01	; 1
+  5c:	8f bd       	out	0x2f, r24	; 47
+	TCCR1A &= ~(1<<WGM11);
+  5e:	8f b5       	in	r24, 0x2f	; 47
+  60:	8d 7f       	andi	r24, 0xFD	; 253
+  62:	8f bd       	out	0x2f, r24	; 47
 	TCCR1B |= (1<<WGM12);
-  50:	8e b5       	in	r24, 0x2e	; 46
-  52:	88 60       	ori	r24, 0x08	; 8
-  54:	8e bd       	out	0x2e, r24	; 46
+  64:	8e b5       	in	r24, 0x2e	; 46
+  66:	88 60       	ori	r24, 0x08	; 8
+  68:	8e bd       	out	0x2e, r24	; 46
 	TCCR1B &= ~(1<<WGM13);
-  56:	8e b5       	in	r24, 0x2e	; 46
-  58:	8f 7e       	andi	r24, 0xEF	; 239
-  5a:	8e bd       	out	0x2e, r24	; 46
+  6a:	8e b5       	in	r24, 0x2e	; 46
+  6c:	8f 7e       	andi	r24, 0xEF	; 239
+  6e:	8e bd       	out	0x2e, r24	; 46
 
-	//Divisor - 1 (No prescaling)
-	TCCR1B &= ~(1<<CS10);
-  5c:	8e b5       	in	r24, 0x2e	; 46
-  5e:	8e 7f       	andi	r24, 0xFE	; 254
-  60:	8e bd       	out	0x2e, r24	; 46
-	TCCR1B |= (1<<CS11);
-  62:	8e b5       	in	r24, 0x2e	; 46
-  64:	82 60       	ori	r24, 0x02	; 2
-  66:	8e bd       	out	0x2e, r24	; 46
-	TCCR1B &= ~(1<<CS12);
-  68:	8e b5       	in	r24, 0x2e	; 46
-  6a:	8b 7f       	andi	r24, 0xFB	; 251
-  6c:	8e bd       	out	0x2e, r24	; 46
+	startTimer();
+  70:	e3 df       	rcall	.-58     	; 0x38 <startTimer>
 
+	//Timer/Counter 1 overflow interrupt settings
+	//Interrupt enable
+	TCNT1 = 65530;
+  72:	8a ef       	ldi	r24, 0xFA	; 250
+  74:	9f ef       	ldi	r25, 0xFF	; 255
+  76:	9d bd       	out	0x2d, r25	; 45
+  78:	8c bd       	out	0x2c, r24	; 44
+	TIMSK |= (1<<2);
+  7a:	89 b7       	in	r24, 0x39	; 57
+  7c:	84 60       	ori	r24, 0x04	; 4
+  7e:	89 bf       	out	0x39, r24	; 57
 
 	// PB1 - output
 	DDRB |= (1<<1);
-  6e:	b9 9a       	sbi	0x17, 1	; 23
+  80:	b9 9a       	sbi	0x17, 1	; 23
 	PORTB &= ~(1<<1);
-  70:	c1 98       	cbi	0x18, 1	; 24
-
-	OCR1A = 0;
-  72:	1b bc       	out	0x2b, r1	; 43
-  74:	1a bc       	out	0x2a, r1	; 42
+  82:	c1 98       	cbi	0x18, 1	; 24
+	//OCR1A = 0x00;
 
 	//Power managment - Open
 	DDRD |= (1<<0);
-  76:	88 9a       	sbi	0x11, 0	; 17
+  84:	88 9a       	sbi	0x11, 0	; 17
 	PORTD |= (1<<0);
-  78:	90 9a       	sbi	0x12, 0	; 18
-  7a:	ff cf       	rjmp	.-2      	; 0x7a <__SREG__+0x3b>
+  86:	90 9a       	sbi	0x12, 0	; 18
 
-0000007c <_exit>:
-  7c:	f8 94       	cli
+	sei();
+  88:	78 94       	sei
+  8a:	ff cf       	rjmp	.-2      	; 0x8a <main+0x3e>
 
-0000007e <__stop_program>:
-  7e:	ff cf       	rjmp	.-2      	; 0x7e <__stop_program>
+0000008c <stopTimer>:
+	TCCR1B &= ~(1<<CS12);
+}
+
+void stopTimer() {
+	//Timer/Counter 1 stop
+	TCCR1B &= ~(1<<CS10);
+  8c:	8e b5       	in	r24, 0x2e	; 46
+  8e:	8e 7f       	andi	r24, 0xFE	; 254
+  90:	8e bd       	out	0x2e, r24	; 46
+	TCCR1B &= ~(1<<CS11);
+  92:	8e b5       	in	r24, 0x2e	; 46
+  94:	8d 7f       	andi	r24, 0xFD	; 253
+  96:	8e bd       	out	0x2e, r24	; 46
+	TCCR1B &= ~(1<<CS12);
+  98:	8e b5       	in	r24, 0x2e	; 46
+  9a:	8b 7f       	andi	r24, 0xFB	; 251
+  9c:	8e bd       	out	0x2e, r24	; 46
+  9e:	08 95       	ret
+
+000000a0 <__vector_9>:
+
+void startTimer();
+void stopTimer();
+
+ISR(TIMER0_OVF_vect)
+{
+  a0:	1f 92       	push	r1
+  a2:	0f 92       	push	r0
+  a4:	0f b6       	in	r0, 0x3f	; 63
+  a6:	0f 92       	push	r0
+  a8:	11 24       	eor	r1, r1
+  aa:	2f 93       	push	r18
+  ac:	3f 93       	push	r19
+  ae:	4f 93       	push	r20
+  b0:	5f 93       	push	r21
+  b2:	6f 93       	push	r22
+  b4:	7f 93       	push	r23
+  b6:	8f 93       	push	r24
+  b8:	9f 93       	push	r25
+  ba:	af 93       	push	r26
+  bc:	bf 93       	push	r27
+  be:	ef 93       	push	r30
+  c0:	ff 93       	push	r31
+	stopTimer();
+  c2:	e4 df       	rcall	.-56     	; 0x8c <stopTimer>
+	//Do smth
+	startTimer();
+  c4:	b9 df       	rcall	.-142    	; 0x38 <startTimer>
+}
+  c6:	ff 91       	pop	r31
+  c8:	ef 91       	pop	r30
+  ca:	bf 91       	pop	r27
+  cc:	af 91       	pop	r26
+  ce:	9f 91       	pop	r25
+  d0:	8f 91       	pop	r24
+  d2:	7f 91       	pop	r23
+  d4:	6f 91       	pop	r22
+  d6:	5f 91       	pop	r21
+  d8:	4f 91       	pop	r20
+  da:	3f 91       	pop	r19
+  dc:	2f 91       	pop	r18
+  de:	0f 90       	pop	r0
+  e0:	0f be       	out	0x3f, r0	; 63
+  e2:	0f 90       	pop	r0
+  e4:	1f 90       	pop	r1
+  e6:	18 95       	reti
+
+000000e8 <_exit>:
+  e8:	f8 94       	cli
+
+000000ea <__stop_program>:
+  ea:	ff cf       	rjmp	.-2      	; 0xea <__stop_program>
