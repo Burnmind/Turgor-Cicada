@@ -11,6 +11,8 @@
 
 void startTimer();
 void stopTimer();
+void initTimerOne();
+void initMotionSensor();
 
 int simpeSize = 0;
 int pointer = 0;
@@ -32,6 +34,30 @@ ISR(TIMER1_OVF_vect)
 
 int main(void)
 {
+	initTimerOne();
+	initMotionSensor();
+
+	DDRB |= (1<<0);
+	PORTB &= ~(1<<0);
+
+	sei();
+
+    while (1) 
+    {
+		if (ADCSRA & (1<<4)) {
+			if (ADC > 600) {
+				PORTB |= (1<<0);
+			} else {
+				PORTB &= ~(1<<0);
+			}
+			
+			ADCSRA |= (1<<4);
+		}
+    }
+}
+
+void initTimerOne()
+{
 	simpeSize = sizeof(voice)/sizeof(char);
 
 	//Normal PWM non-inverting mode
@@ -51,16 +77,31 @@ int main(void)
 	OCR1A = 0;
 
 	startTimer();
+}
 
-	//Power managment - Open
-	DDRD |= (1<<0);
-	PORTD |= (1<<0);
+void initMotionSensor()
+{
+	DDRC &= ~(1<<0);
 
-	sei();
+	//ADC configuration
+	//ADC enable
+	ADCSRA |= (1<<ADEN);
+	//непрерывное преобразование
+	ADCSRA |= (1<<ADFR);
 
-    while (1) 
-    {
-    }
+	//125 kHz
+	ADCSRA |= (1<<ADPS0) | (1<<ADPS1);
+	ADCSRA &= ~(1<<ADPS2);
+
+	//2,56v voltage reference
+	ADMUX |= (1<<REFS1) | (1<<REFS0);
+	//Right side
+	ADMUX &= ~(1<<ADLAR);
+
+	ADMUX &= ~((1<<MUX3) | (1<<MUX2) | (1<<MUX1) | (1<<MUX0));
+
+	//ADC start
+	ADCSRA |= (1<<ADSC);
 }
 
 void startTimer() {
