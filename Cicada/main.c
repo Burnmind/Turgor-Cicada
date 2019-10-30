@@ -37,18 +37,13 @@ int main(void)
 	initTimerOne();
 	initMotionSensor();
 
-	DDRB |= (1<<0);
-	PORTB &= ~(1<<0);
-
-	sei();
-
     while (1) 
     {
 		if (ADCSRA & (1<<4)) {
-			if (ADC > 600) {
-				PORTB |= (1<<0);
+			if (ADC >= 600) {
+				PORTD |= (1<<0);
 			} else {
-				PORTB &= ~(1<<0);
+				PORTD &= ~(1<<0);
 			}
 			
 			ADCSRA |= (1<<4);
@@ -72,7 +67,8 @@ void initTimerOne()
 
 	//Timer/Counter 1 overflow interrupt settings
 	//Interrupt enable
-	TIMSK |= (1<<2);
+	TIMSK |= (1<<TOIE1);
+	SREG |= (1<<7);
 
 	OCR1A = 0;
 
@@ -81,6 +77,10 @@ void initTimerOne()
 
 void initMotionSensor()
 {
+
+	DDRD |= (1<<0);
+	PORTD &= ~(1<<0);
+
 	DDRC &= ~(1<<0);
 
 	//ADC configuration
@@ -90,15 +90,13 @@ void initMotionSensor()
 	ADCSRA |= (1<<ADFR);
 
 	//125 kHz
-	ADCSRA |= (1<<ADPS0) | (1<<ADPS1);
+	ADCSRA |= (1<<ADPS1) | (1<<ADPS0);
 	ADCSRA &= ~(1<<ADPS2);
 
 	//2,56v voltage reference
 	ADMUX |= (1<<REFS1) | (1<<REFS0);
 	//Right side
 	ADMUX &= ~(1<<ADLAR);
-
-	ADMUX &= ~((1<<MUX3) | (1<<MUX2) | (1<<MUX1) | (1<<MUX0));
 
 	//ADC start
 	ADCSRA |= (1<<ADSC);
