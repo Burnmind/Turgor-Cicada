@@ -24,7 +24,9 @@ int seconds = 0;
 int currentCicle = 0;
 
 int simpeSize = 0;
-int pointer = 0;
+int pointer0 = 0;
+int pointer1 = 100;
+int pointer2 = 200;
 
 char moutionSensorStop = false;
 
@@ -34,10 +36,22 @@ ISR(TIMER1_OVF_vect)
 {
 	stopTimer();
 	
-	OCR1A = voice[pointer];
-	pointer++;
-	if (pointer >= simpeSize) {
-		pointer = 0;
+	OCR1A = voice[pointer0];
+	pointer0++;
+	if (pointer0 >= simpeSize) {
+		pointer0 = 0;
+	}
+
+	OCR1B = voice[pointer1];
+	pointer1++;
+	if (pointer1 >= simpeSize) {
+		pointer1 = 0;
+	}
+
+	OCR2 = voice[pointer2];
+	pointer2++;
+	if (pointer2 >= simpeSize) {
+		pointer2 = 0;
 	}
 
 	if (moutionSensorStop) {
@@ -54,30 +68,32 @@ ISR(TIMER1_OVF_vect)
 	}
 	
 	startTimer();
-}
+};
+
+ISR(ADC_vect)
+{
+	if (ADC >= 600 || moutionSensorStop) {
+		PORTD |= (1<<0);
+		
+		if (!moutionSensorStop) {
+			moutionSensorStop = true;
+			seconds = 0;
+			currentCicle = 0;
+		}
+	} else {
+		PORTD &= ~(1<<0);
+	}
+};
 
 int main(void)
 {
 	initTimerOne();
 	initMotionSensor();
+	sei();
 
     while (1) 
     {
-		if (ADCSRA & (1<<4)) {
-			if (ADC >= 600 || moutionSensorStop) {
-				PORTD |= (1<<0);
-				
-				if (!moutionSensorStop) {
-					moutionSensorStop = true;
-					seconds = 0;
-					currentCicle = 0;
-				}
-			} else {
-				PORTD &= ~(1<<0);
-			}
-			
-			ADCSRA |= (1<<4);
-		}
+
     }
 }
 
@@ -88,6 +104,8 @@ void initTimerOne()
 	//Normal PWM non-inverting mode
 	TCCR1A &= ~(1<<COM1A0);
 	TCCR1A |= (1<<COM1A1);
+	TCCR1A &= ~(1<<COM1B0);
+	TCCR1A |= (1<<COM1B1);
 
 	//Fast PWM 8-bit
 	TCCR1A |= (1<<WGM10);
@@ -98,9 +116,21 @@ void initTimerOne()
 	//Timer/Counter 1 overflow interrupt settings
 	//Interrupt enable
 	TIMSK |= (1<<TOIE1);
-	SREG |= (1<<7);
+
+	//Fast PWM timer 2
+	TCCR2 |= (1<<WGM21) | (1<<WGM20);
+	//Normal PWM non-inverting mode
+	TCCR2 &= ~(1<<COM20);
+	TCCR2 |= (1<<COM21);
+
+	//Timer/Counter 2 start 1/8
+	TCCR2 &= ~(1<<CS20);
+	TCCR2 |= (1<<CS21);
+	TCCR2 &= ~(1<<CS22);
 
 	OCR1A = 0;
+	OCR1B = 0;
+	OCR2 = 0;
 
 	startTimer();
 }
@@ -122,6 +152,8 @@ void initMotionSensor()
 	//125 kHz
 	ADCSRA |= (1<<ADPS1) | (1<<ADPS0);
 	ADCSRA &= ~(1<<ADPS2);
+	//Interrupt enable
+	ADCSRA |= (1<<ADIE);
 
 	//2,56v voltage reference
 	ADMUX |= (1<<REFS1) | (1<<REFS0);
